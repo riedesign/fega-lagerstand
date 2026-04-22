@@ -24,6 +24,13 @@
 
 require_once __DIR__ . '/env.php';
 
+// Defensive: stellt sicher dass JWT_SECRET_KEY aus der .env geladen ist,
+// auch wenn der Aufrufer (z.B. api/*.php) load_env() noch nicht gerufen
+// hat. load_env() ist idempotent und billig.
+if (env('JWT_SECRET_KEY', '') === '') {
+    load_env(__DIR__ . '/../.env');
+}
+
 const FEGA_AUTH_PORTAL = 'https://auth.rieste.org';
 const FEGA_AUTH_COOKIE = 'rieste_token';
 
