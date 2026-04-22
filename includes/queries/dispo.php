@@ -210,16 +210,21 @@ function get_bestand_abgleich($conn, $jtl_conn, $time_period = '4_weeks') {
     $result = execute_query($conn, $sql);
     if ($result) {
         while ($row = $result->fetch_assoc()) {
+            // Datenhygiene: HAN und Name aus der DB haben teilweise
+            // Zeilenumbrueche/Whitespace am Ende. Das killt Email-Text
+            // und JTL-Join — daher hier einmalig normalisieren.
+            $han         = trim(preg_replace('/\s+/', ' ', (string)$row['han']));
+            $artikelname = trim(preg_replace('/\s+/', ' ', (string)$row['artikelname']));
             $artikel[] = [
                 'id'             => (int)$row['id'],
-                'han'            => $row['han'],
-                'artikelname'    => $row['artikelname'],
+                'han'            => $han,
+                'artikelname'    => $artikelname,
                 'fega_bestand'   => (int)$row['lagerstand'],
                 'rieste_bestand' => null,
                 'summe'          => null,
             ];
-            if ($row['han'] !== null && $row['han'] !== '') {
-                $hans[] = $row['han'];
+            if ($han !== '') {
+                $hans[] = $han;
             }
         }
     }
