@@ -133,14 +133,66 @@ function get_dispo_overview($conn, $time_period) {
 }
 
 /**
+ * Berechnet den Nachbestellungs-Vorschlag fuer einen einzelnen Artikel.
+ *
+ * Logik: wenn die aktuelle Reichweite beim Kunden unter Lead-Time + 30%
+ * Safety-Puffer faellt, empfehlen wir eine Nachbestellung die den Bestand
+ * auf eine Ziel-Reichweite von TARGET_REICHWEITE_DAYS auffuellt.
+ * Empfehlung wird auf die naechste Zehnerstelle aufgerundet damit die
+ * Mengen fuer Sales-Kommunikation "sauber" sind.
+ */
+function berechne_nachbestell_vorschlag($fega_bestand, $avg_daily, $lead_time_days) {
+    $target_days = 21;       // Ziel-Reichweite nach Lieferung
+    $safety_factor = 1.3;    // 30% Puffer auf Lead-Time
+    $round_to = 10;          // Vorschlaege auf 10er-Schritte runden
+
+    if ($avg_daily <= 0) {
+        return [
+            'stk'             => 0,
+            'grund'           => 'Kein Abverkauf im Zeitraum',
+            'reichweite_tage' => null,
+            'empfehlen'       => false,
+        ];
+    }
+
+    $reichweite = $fega_bestand / $avg_daily;
+    $schwelle   = $lead_time_days * $safety_factor;
+
+    if ($reichweite >= $schwelle) {
+        return [
+            'stk'             => 0,
+            'grund'           => 'Bestand ausreichend (' . round($reichweite, 1) . ' Tage Reichweite)',
+            'reichweite_tage' => round($reichweite, 1),
+            'empfehlen'       => false,
+        ];
+    }
+
+    $soll_bestand  = $target_days * $avg_daily;
+    $rohmenge      = max(0, $soll_bestand - $fega_bestand);
+    $nachbestellen = (int)(ceil($rohmenge / $round_to) * $round_to);
+
+    return [
+        'stk'             => $nachbestellen,
+        'grund'           => 'Reichweite ' . round($reichweite, 1) . ' T < '
+                             . round($schwelle, 1) . ' T (Lead + Safety)',
+        'reichweite_tage' => round($reichweite, 1),
+        'empfehlen'       => $nachbestellen > 0,
+    ];
+}
+
+/**
  * Bestand-Abgleich: aktueller Lagerstand aller Polar-Artikel bei Fega +
  * (falls JTL erreichbar) bei uns (Rieste). Wird ueber die HAN verknuepft.
  *
- * @param mysqli $conn      Fega-DB
- * @param PDO|null $jtl_conn optionale JTL-MSSQL-Verbindung, null = kein Rieste-Bestand
+ * Ergaenzt pro Artikel auch den Nachbestellungs-Vorschlag basierend auf
+ * den Verkaufsmengen im uebergebenen Zeitraum.
+ *
+ * @param mysqli    $conn        Fega-DB
+ * @param PDO|null  $jtl_conn    optionale JTL-MSSQL-Verbindung
+ * @param string    $time_period Key aus $TIME_PERIODS (fuer Verkaufs-Mittel)
  * @return array
  */
-function get_bestand_abgleich($conn, $jtl_conn) {
+function get_bestand_abgleich($conn, $jtl_conn, $time_period = '4_weeks') {
     // Alle Polar-Artikel mit aktuellem Fega-Bestand
     $sql = "
         SELECT t1.id, t1.han, t1.artikelname, t2.lagerstand
@@ -178,9 +230,15 @@ function get_bestand_abgleich($conn, $jtl_conn) {
         $rieste_map = get_rieste_bestand_map($jtl_conn, array_unique($hans));
     }
 
+    // Abverkaufs-Daten im gewaehlten Zeitraum holen (nur Polar), fuer die
+    // Nachbestellungs-Vorschlaege. Liefert pro Artikel-ID die Abgaenge.
+    $days = get_days_for_period($time_period);
+    $abgaenge_data = get_daily_abgaenge($conn, $days, EIGEN_FILTER_SQL);
+
     $sum_fega = 0;
     $sum_rieste = 0;
     $rieste_match_count = 0;
+    $vorschlaege_count = 0;
     foreach ($artikel as $i => $a) {
         $sum_fega += $a['fega_bestand'];
         if ($jtl_available && isset($rieste_map[$a['han']])) {
@@ -190,10 +248,34 @@ function get_bestand_abgleich($conn, $jtl_conn) {
             $sum_rieste += $rb;
             $rieste_match_count++;
         }
+
+        // Verkaufs-Daten fuer den Artikel → avg_daily → Vorschlag
+        $total_abgang = 0;
+        if (isset($abgaenge_data[$a['id']])) {
+            foreach ($abgaenge_data[$a['id']]['abgaenge'] as $e) {
+                $total_abgang += $e['abgang'];
+            }
+        }
+        $avg_daily = ($days > 0) ? $total_abgang / $days : 0;
+        $lead_time = get_lead_time_days($a['han']);
+
+        $vorschlag = berechne_nachbestell_vorschlag(
+            $a['fega_bestand'], $avg_daily, $lead_time
+        );
+        $artikel[$i]['avg_daily']    = round($avg_daily, 2);
+        $artikel[$i]['total_abgang'] = $total_abgang;
+        $artikel[$i]['lead_time']    = $lead_time;
+        $artikel[$i]['vorschlag']    = $vorschlag;
+
+        if ($vorschlag['empfehlen']) {
+            $vorschlaege_count++;
+        }
     }
 
     return [
         'artikel'            => $artikel,
+        'time_period'        => $time_period,
+        'vorschlaege_count'  => $vorschlaege_count,
         'sum_fega'           => $sum_fega,
         'sum_rieste'         => $sum_rieste,
         'sum_gesamt'         => $sum_fega + $sum_rieste,

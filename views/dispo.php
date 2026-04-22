@@ -6,7 +6,11 @@ require_once __DIR__ . '/../includes/queries/dispo.php';
 
 $kpi      = get_dispo_overview($conn, $time_period);
 $jtl_conn = get_jtl_mssql_conn();
-$abgleich = get_bestand_abgleich($conn, $jtl_conn);
+$abgleich = get_bestand_abgleich($conn, $jtl_conn, $time_period);
+
+// Label fuer Email-Text (aus $TIME_PERIODS)
+$zeitraum_label = $TIME_PERIODS[$time_period]['label'] ?? $time_period;
+$nutzer_name = $user['display_name'] ?? 'Team Rieste';
 
 // Trend
 $trend_arrow = '&#9654;';
@@ -107,6 +111,8 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 <th>Bei Rieste</th>
                 <th>Summe</th>
                 <?php endif; ?>
+                <th>&Oslash; Verkauf/Tag</th>
+                <th>Vorschlag</th>
             </tr>
         </thead>
         <tbody>
@@ -121,8 +127,24 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                     $summe_cell = '<strong>' . number_format($a['summe'], 0, ',', '.') . '</strong>';
                 }
                 $han_link = 'index.php?page=produktdetail&han=' . urlencode($a['han']) . '&time_period=' . urlencode($time_period);
+
+                $v = $a['vorschlag'];
+                if ($v['empfehlen']) {
+                    $vorschlag_cell = '<strong class="text-critical">'
+                        . number_format($v['stk'], 0, ',', '.') . ' Stk.</strong>'
+                        . '<br><small style="color:#777;">' . htmlspecialchars($v['grund']) . '</small>';
+                    $row_class = 'row-warn';
+                    // Wenn Reichweite < Lead-Time direkt: als kritisch markieren
+                    if ($v['reichweite_tage'] !== null && $v['reichweite_tage'] < $a['lead_time']) {
+                        $row_class = 'row-critical';
+                    }
+                } else {
+                    $vorschlag_cell = '<span style="color:#888;">&ndash;</span>'
+                        . '<br><small style="color:#999;">' . htmlspecialchars($v['grund']) . '</small>';
+                    $row_class = '';
+                }
             ?>
-            <tr>
+            <tr class="<?php echo $row_class; ?>">
                 <td><a href="<?php echo htmlspecialchars($han_link); ?>" class="markt-han-link" style="color:#2196F3;text-decoration:none;">
                     <?php echo htmlspecialchars($a['artikelname']); ?>
                 </a></td>
@@ -132,11 +154,111 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 <td><?php echo $rieste_cell; ?></td>
                 <td><?php echo $summe_cell; ?></td>
                 <?php endif; ?>
+                <td><?php echo number_format($a['avg_daily'], 1, ',', '.'); ?></td>
+                <td><?php echo $vorschlag_cell; ?></td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
 </div>
+
+<?php
+// E-Mail-Vorschlag: nur Artikel mit empfohlener Nachbestellung
+$email_artikel = array_filter($abgleich['artikel'], function($a) {
+    return $a['vorschlag']['empfehlen'];
+});
+// Nach Empfehlungsmenge absteigend sortieren
+usort($email_artikel, function($a, $b) {
+    return $b['vorschlag']['stk'] - $a['vorschlag']['stk'];
+});
+?>
+
+<div class="section" id="email-vorschlag-section">
+    <h3 class="section-title">E-Mail-Vorschlag an Fega</h3>
+    <?php if (empty($email_artikel)): ?>
+        <p style="color:#4CAF50;font-weight:600;">
+            Kein Nachbestellungs-Bedarf im gewaehlten Zeitraum &mdash; alle Artikel haben ausreichende Reichweite.
+        </p>
+    <?php else: ?>
+        <p style="margin-bottom:10px;color:#555;font-size:0.9em;">
+            Basierend auf <strong><?php echo htmlspecialchars($zeitraum_label); ?></strong>:
+            <?php echo count($email_artikel); ?> Artikel mit Nachbestellungs-Empfehlung.
+            Text unten editierbar vor dem Versenden.
+        </p>
+        <div class="email-toolbar">
+            <button type="button" class="btn-primary" onclick="copyEmailText()">In Zwischenablage kopieren</button>
+            <a class="btn-secondary"
+               href="#"
+               id="email-mailto-link"
+               onclick="openMailto(event)">
+                In E-Mail-Programm oeffnen
+            </a>
+            <span id="email-copy-hint" style="margin-left:12px;color:#4CAF50;display:none;">Kopiert!</span>
+        </div>
+        <textarea id="email-vorschlag-text" rows="<?php echo min(40, 12 + count($email_artikel) * 2); ?>" style="width:100%;font-family:ui-monospace,Menlo,monospace;font-size:0.85em;padding:12px;border:1px solid #ddd;border-radius:6px;"><?php
+            $lines = [];
+            $lines[] = 'Betreff: Vorschlag Nachbestellung Polar-Produkte';
+            $lines[] = '';
+            $lines[] = 'Hallo Team Fega,';
+            $lines[] = '';
+            $lines[] = 'auf Basis der Abverkaufsdaten der ' . $zeitraum_label
+                     . ' moechten wir Ihnen folgende Nachbestellung vorschlagen,';
+            $lines[] = 'damit Ihr Bestand wieder eine Reichweite von ca. 3 Wochen erreicht:';
+            $lines[] = '';
+            foreach ($email_artikel as $a) {
+                $v = $a['vorschlag'];
+                $lines[] = sprintf(
+                    '- %s (HAN: %s): %s Stk.',
+                    $a['artikelname'], $a['han'], number_format($v['stk'], 0, ',', '.')
+                );
+                $lines[] = sprintf(
+                    '    Bestand aktuell %s Stk., durchschnittlich %s Stk./Tag, Reichweite %s Tage.',
+                    number_format($a['fega_bestand'], 0, ',', '.'),
+                    number_format($a['avg_daily'], 1, ',', '.'),
+                    $v['reichweite_tage'] !== null ? number_format($v['reichweite_tage'], 1, ',', '.') : '?'
+                );
+            }
+            $lines[] = '';
+            $lines[] = 'Fuer eventuelle Rueckfragen oder Anpassungen der Mengen stehen wir gerne zur Verfuegung.';
+            $lines[] = '';
+            $lines[] = 'Viele Gruesse,';
+            $lines[] = $nutzer_name;
+            echo htmlspecialchars(implode("\n", $lines));
+        ?></textarea>
+    <?php endif; ?>
+</div>
+
+<style>
+.email-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.email-toolbar .btn-primary,
+.email-toolbar .btn-secondary {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 0.9em;
+    text-decoration: none;
+    display: inline-block;
+}
+.email-toolbar .btn-primary {
+    background: #2196F3;
+    color: #fff;
+    border-color: #1976D2;
+}
+.email-toolbar .btn-primary:hover { background: #1976D2; }
+.email-toolbar .btn-secondary {
+    background: #fff;
+    color: #333;
+    border-color: #ccc;
+}
+.email-toolbar .btn-secondary:hover { background: #f5f5f5; }
+#abgleich-table td small { line-height: 1.2; }
+</style>
 
 <!-- Abgang-Detail (eingeklappt, oeffnet per Klick auf Kachel) -->
 <div class="section detail-panel" id="abgang-detail" style="display:none;">
@@ -247,10 +369,55 @@ function toggleDetail(id) {
 }
 
 $(document).ready(function() {
-    // Bestands-Abgleich-Tabelle sortierbar + suchbar machen
+    // Bestands-Abgleich-Tabelle sortierbar + suchbar machen.
+    // Letzte Spalte (Vorschlag) enthaelt HTML + Grund-Text, nicht sortierbar.
+    var colCount = document.querySelectorAll('#abgleich-table thead th').length;
     initDataTable('#abgleich-table', {
         pageLength: 25,
-        order: [[2, 'desc']]  // sortiert nach Fega-Bestand absteigend
+        order: [[2, 'desc']],  // sortiert nach Fega-Bestand absteigend
+        columnDefs: [
+            { targets: colCount - 1, orderable: false }
+        ]
     });
 });
+
+function copyEmailText() {
+    var ta = document.getElementById('email-vorschlag-text');
+    if (!ta) return;
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    var done = false;
+    try {
+        done = document.execCommand('copy');
+    } catch (e) { done = false; }
+    if (!done && navigator.clipboard) {
+        navigator.clipboard.writeText(ta.value);
+        done = true;
+    }
+    if (done) {
+        var hint = document.getElementById('email-copy-hint');
+        if (hint) {
+            hint.style.display = 'inline';
+            setTimeout(function() { hint.style.display = 'none'; }, 1500);
+        }
+    }
+}
+
+function openMailto(e) {
+    e.preventDefault();
+    var ta = document.getElementById('email-vorschlag-text');
+    if (!ta) return;
+    var txt = ta.value;
+    // Betreff aus der ersten Zeile ziehen wenn sie mit "Betreff:" beginnt
+    var lines = txt.split('\n');
+    var subject = 'Vorschlag Nachbestellung Polar-Produkte';
+    var body = txt;
+    if (lines.length > 0 && lines[0].toLowerCase().indexOf('betreff:') === 0) {
+        subject = lines[0].substring(lines[0].indexOf(':') + 1).trim();
+        body = lines.slice(1).join('\n').replace(/^\n+/, '');
+    }
+    var href = 'mailto:?subject=' + encodeURIComponent(subject)
+             + '&body=' + encodeURIComponent(body);
+    window.location.href = href;
+}
 </script>
