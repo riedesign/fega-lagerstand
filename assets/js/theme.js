@@ -53,6 +53,11 @@
                     root.style.setProperty('--layout-' + k.replace(/_/g, '-'), cfg.layout[k]);
                 });
             }
+            if (cfg.density) {
+                Object.keys(cfg.density).forEach(function (k) {
+                    root.style.setProperty('--density-' + k, cfg.density[k]);
+                });
+            }
         } catch (e) { /* swallow */ }
         refreshCharts();
     }
@@ -142,6 +147,29 @@
             .then(function (cfg) { if (cfg) applyTokens(cfg); })
             .catch(function () { /* swallow */ });
     }
+
+    /* --- Density (Phase 2c) --- */
+    function currentDensity() {
+        return localStorage.getItem('rieste-density') || 'comfortable';
+    }
+    function applyDensity(d) {
+        document.documentElement.setAttribute('data-density', d);
+        document.querySelectorAll('[data-rieste-density-label]').forEach(function (el) {
+            var labels = { compact: 'Kompakt', comfortable: 'Komfortabel', spacious: 'Weit' };
+            el.textContent = labels[d] || 'Komfortabel';
+        });
+    }
+    function cycleDensity() {
+        var order = ['comfortable', 'compact', 'spacious'];
+        var next = order[(order.indexOf(currentDensity()) + 1) % order.length];
+        localStorage.setItem('rieste-density', next);
+        applyDensity(next);
+    }
+    document.addEventListener('click', function (e) {
+        var t = e.target.closest ? e.target.closest('[data-rieste-density-toggle="cycle"]') : null;
+        if (t) { e.preventDefault(); cycleDensity(); }
+    });
+    applyDensity(currentDensity());
 
     /* --- Boot --- */
 

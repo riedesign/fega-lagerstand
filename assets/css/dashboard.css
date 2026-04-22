@@ -816,3 +816,17 @@ a.rieste-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-
 .rieste-breadcrumb-item a { color: var(--color-link); text-decoration: none; }
 .rieste-breadcrumb-item a:hover { color: var(--color-link-hover); text-decoration: underline; }
 .rieste-breadcrumb-item.active { color: var(--color-text-primary); font-weight: 500; }
+
+/* Phase 2c: Density + High-Contrast */
+.rieste-card        { padding: calc(1rem * var(--density, 1)); }
+.rieste-stat-card   { padding: calc(16px * var(--density, 1)) calc(18px * var(--density, 1)); gap: calc(14px * var(--density, 1)); }
+.rieste-btn         { padding: calc(.45rem * var(--density, 1)) calc(.9rem * var(--density, 1)); }
+.rieste-input       { padding: calc(.45rem * var(--density, 1)) calc(.7rem * var(--density, 1)); }
+.rieste-field       { margin-bottom: calc(12px * var(--density, 1)); }
+.rieste-card-header { margin-bottom: calc(.75rem * var(--density, 1)); padding-bottom: calc(.75rem * var(--density, 1)); }
+
+@media (prefers-contrast: more) {
+    .rieste-btn, .rieste-input, .rieste-card, .rieste-stat-card { border-width: 2px; }
+    .rieste-btn:focus-visible, .rieste-input:focus { outline-width: 3px; }
+    .rieste-badge { border: 1px solid currentColor; }
+}

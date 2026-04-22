@@ -130,6 +130,11 @@ if (!function_exists('design_load')) {
                 'z_modal' => '50',
                 'z_toast' => '60',
             ),
+            'density' => array(
+                'compact' => '0.8',
+                'comfortable' => '1.0',
+                'spacious' => '1.15',
+            ),
             'branding' => array(
                 'app_name' => 'RIESTE',
                 'logo_url_light' => '/static/logos/rieste-logo.svg',
