@@ -2,6 +2,9 @@
 /**
  * API-Endpunkt: Produktdetail
  */
+require_once __DIR__ . '/../includes/auth.php';
+if (!fega_auth_disabled()) { fega_require_api(); }
+
 header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/db_config.php';

@@ -11,6 +11,14 @@ error_reporting(E_ALL);
 ini_set('display_errors', $app_env === 'development' ? '1' : '0');
 ini_set('log_errors', '1');
 
+// Auth: JWT-Cookie vom Rieste-Auth-Portal validieren
+require_once __DIR__ . '/includes/auth.php';
+if (!fega_auth_disabled()) {
+    $user = fega_require_login();
+} else {
+    $user = ['id' => 0, 'username' => 'dev', 'role' => 'admin', 'display_name' => 'Local Dev', 'email' => ''];
+}
+
 $page = $_GET['page'] ?? 'kpi';
 $allowed_pages = ['kpi', 'produktdetail', 'vergleich'];
 
