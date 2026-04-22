@@ -31,37 +31,6 @@ $design_app_name = isset($design['branding']['app_name']) ? $design['branding'][
     </script>
     <script src="assets/js/theme.js" defer></script>
 </head>
-<body>
+<body class="rieste-shell">
 
-<div class="dashboard-wrapper">
-    <header class="dashboard-header">
-        <h1>Lagerbestands-Dashboard</h1>
-        <div class="global-controls">
-            <label for="global-time-period">Zeitraum:</label>
-            <select id="global-time-period" onchange="updateTimePeriod(this.value)">
-                <?php echo render_time_period_options($time_period); ?>
-            </select>
-            <button type="button" class="rieste-theme-toggle"
-                    data-rieste-theme-toggle="cycle" title="Farbmodus wechseln">
-                <span data-rieste-theme-label>Auto</span>
-            </button>
-        </div>
-    </header>
-
-    <nav class="tab-navigation">
-        <?php
-        $tabs = [
-            'markt'          => 'Markt',
-            'produktdetail'  => 'Produktdetail',
-            'dispo'          => 'Dispo',
-            'vergleich'      => 'Vergleich (alt)',
-        ];
-        foreach ($tabs as $key => $label):
-            $active = ($page === $key) ? ' active' : '';
-            $href = "index.php?page={$key}&time_period={$time_period}";
-        ?>
-            <a href="<?php echo $href; ?>" class="tab-link<?php echo $active; ?>"><?php echo $label; ?></a>
-        <?php endforeach; ?>
-    </nav>
-
-    <main class="dashboard-content">
+<?php require __DIR__ . '/sidebar.php'; ?>
