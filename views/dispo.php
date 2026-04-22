@@ -111,7 +111,7 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 <th>Bei Rieste</th>
                 <th>Summe</th>
                 <?php endif; ?>
-                <th>&Oslash; Verkauf/Tag</th>
+                <th>Verkauf Zeitraum</th>
                 <th>Vorschlag</th>
             </tr>
         </thead>
@@ -154,7 +154,7 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 <td><?php echo $rieste_cell; ?></td>
                 <td><?php echo $summe_cell; ?></td>
                 <?php endif; ?>
-                <td><?php echo number_format($a['avg_daily'], 1, ',', '.'); ?></td>
+                <td><?php echo number_format($a['total_abgang'], 0, ',', '.'); ?></td>
                 <td><?php echo $vorschlag_cell; ?></td>
             </tr>
         <?php endforeach; ?>
@@ -212,9 +212,10 @@ usort($email_artikel, function($a, $b) {
                     $a['artikelname'], $a['han'], number_format($v['stk'], 0, ',', '.')
                 );
                 $lines[] = sprintf(
-                    '    Bestand aktuell %s Stk., durchschnittlich %s Stk./Tag, Reichweite %s Tage.',
+                    '    Bestand aktuell %s Stk., Abverkauf %s: %s Stk., Reichweite %s Tage.',
                     number_format($a['fega_bestand'], 0, ',', '.'),
-                    number_format($a['avg_daily'], 1, ',', '.'),
+                    $zeitraum_label,
+                    number_format($a['total_abgang'], 0, ',', '.'),
                     $v['reichweite_tage'] !== null ? number_format($v['reichweite_tage'], 1, ',', '.') : '?'
                 );
             }
