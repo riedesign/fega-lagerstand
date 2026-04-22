@@ -1,14 +1,17 @@
 <?php
 /**
- * KPI-Dashboard: Datenlogik (nur Eigenprodukte / Polar)
+ * Dispo-Dashboard: Datenlogik (nur Eigenprodukte / Polar)
+ * — kritische Produkte, Ladenhueter, Topseller, Lead-Time-Warnungen.
  */
 
-define('EIGEN_FILTER_SQL', "AND t1.artikelname LIKE '%Polar%'");
+if (!defined('EIGEN_FILTER_SQL')) {
+    define('EIGEN_FILTER_SQL', "AND t1.artikelname LIKE '%Polar%'");
+}
 
 /**
- * Gesamtuebersicht fuer Eigenprodukte.
+ * Gesamtuebersicht fuer Eigenprodukte (Dispo-Sicht).
  */
-function get_kpi_overview($conn, $time_period) {
+function get_dispo_overview($conn, $time_period) {
     $days = get_days_for_period($time_period);
 
     // 1. Gesamtbestand Eigenprodukte (aktuellster Stand pro Artikel)

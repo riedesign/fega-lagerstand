@@ -19,11 +19,15 @@ if (!fega_auth_disabled()) {
     $user = ['id' => 0, 'username' => 'dev', 'role' => 'admin', 'display_name' => 'Local Dev', 'email' => ''];
 }
 
-$page = $_GET['page'] ?? 'kpi';
-$allowed_pages = ['kpi', 'produktdetail', 'vergleich'];
+$page = $_GET['page'] ?? 'markt';
+
+// Alias fuer alte Bookmarks
+if ($page === 'kpi') $page = 'dispo';
+
+$allowed_pages = ['markt', 'produktdetail', 'dispo', 'vergleich'];
 
 if (!in_array($page, $allowed_pages)) {
-    $page = 'kpi';
+    $page = 'markt';
 }
 
 require_once __DIR__ . '/config/db_config.php';
@@ -31,10 +35,7 @@ require_once __DIR__ . '/config/app_config.php';
 require_once __DIR__ . '/includes/functions.php';
 
 // Globale Parameter
-$time_period = $_GET['time_period'] ?? '3_weeks';
-if (!isset($TIME_PERIODS[$time_period])) {
-    $time_period = '3_weeks';
-}
+$time_period = resolve_time_period($_GET['time_period'] ?? '4_weeks');
 
 include __DIR__ . '/views/header.php';
 include __DIR__ . "/views/{$page}.php";

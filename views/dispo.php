@@ -1,10 +1,10 @@
 <?php
 /**
- * Ansicht: KPI-Dashboard (nur Eigenprodukte)
+ * Ansicht: Dispo-Dashboard (nur Eigenprodukte: kritische, Ladenhueter, Topseller)
  */
-require_once __DIR__ . '/../includes/queries/kpi.php';
+require_once __DIR__ . '/../includes/queries/dispo.php';
 
-$kpi = get_kpi_overview($conn, $time_period);
+$kpi = get_dispo_overview($conn, $time_period);
 
 // Trend
 $trend_arrow = '&#9654;';
@@ -21,7 +21,7 @@ $abgang_diff_text = ($abgang_diff >= 0 ? '+' : '') . $abgang_diff . ' vs. gester
 $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
 ?>
 
-<h2 class="section-title">Eigenprodukte &mdash; KPI-Dashboard</h2>
+<h2 class="section-title">Dispo &mdash; Eigenprodukte (Polar)</h2>
 
 <!-- KPI Kacheln -->
 <div class="kpi-grid">

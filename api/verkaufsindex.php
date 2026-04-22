@@ -12,10 +12,7 @@ require_once __DIR__ . '/../config/app_config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/queries/verkaufsindex.php';
 
-$time_period = $_GET['time_period'] ?? '3_weeks';
-if (!isset($TIME_PERIODS[$time_period])) {
-    $time_period = '3_weeks';
-}
+$time_period = resolve_time_period($_GET['time_period'] ?? '4_weeks');
 $aggregation = $_GET['aggregation'] ?? 'day';
 if (!in_array($aggregation, ['day', 'week', 'month'])) {
     $aggregation = 'day';

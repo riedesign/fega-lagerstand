@@ -8,7 +8,23 @@
  */
 function get_days_for_period($time_period) {
     global $TIME_PERIODS;
-    return $TIME_PERIODS[$time_period]['days'] ?? 21;
+    return $TIME_PERIODS[$time_period]['days'] ?? 28;
+}
+
+/**
+ * Normalisiert einen Zeitraum-Key: wendet Alias-Mapping an und faellt auf
+ * den Standard-Key zurueck wenn unbekannt. Rueckgabewert ist immer ein
+ * Key der in $TIME_PERIODS existiert.
+ */
+function resolve_time_period($time_period, $default = '4_weeks') {
+    global $TIME_PERIODS, $TIME_PERIOD_ALIAS;
+    if (isset($TIME_PERIOD_ALIAS[$time_period])) {
+        $time_period = $TIME_PERIOD_ALIAS[$time_period];
+    }
+    if (!isset($TIME_PERIODS[$time_period])) {
+        return $default;
+    }
+    return $time_period;
 }
 
 /**

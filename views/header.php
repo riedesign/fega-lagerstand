@@ -28,9 +28,10 @@
     <nav class="tab-navigation">
         <?php
         $tabs = [
-            'kpi'            => 'KPI-Dashboard',
+            'markt'          => 'Markt',
             'produktdetail'  => 'Produktdetail',
-            'vergleich'      => 'Vergleich Eigen/Fremd',
+            'dispo'          => 'Dispo',
+            'vergleich'      => 'Vergleich (alt)',
         ];
         foreach ($tabs as $key => $label):
             $active = ($page === $key) ? ' active' : '';

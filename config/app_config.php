@@ -44,15 +44,24 @@ $CHART_COLORS = [
     'rgb(99, 255, 132)',
 ];
 
-// Verfuegbare Zeitraeume
+// Verfuegbare Zeitraeume — die sechs die im Markt-Dashboard angeboten werden.
+// Alte Keys (1_week, 3_weeks) bleiben als Alias erhalten damit Bookmarks
+// auf produktdetail.php nicht crashen, sie tauchen aber nicht im Dropdown auf.
 $TIME_PERIODS = [
-    '1_week'   => ['label' => 'Letzte Woche',      'days' => 7],
-    '2_weeks'  => ['label' => 'Letzte 2 Wochen',    'days' => 14],
-    '3_weeks'  => ['label' => 'Letzte 3 Wochen',    'days' => 21],
-    '4_weeks'  => ['label' => 'Letzte 4 Wochen',    'days' => 28],
-    '2_months' => ['label' => 'Letzte 2 Monate',    'days' => 60],
-    '3_months' => ['label' => 'Letzte 3 Monate',    'days' => 90],
-    '6_months' => ['label' => 'Letzte 6 Monate',    'days' => 180],
+    '2_weeks'   => ['label' => 'Letzte 2 Wochen',  'days' => 14],
+    '4_weeks'   => ['label' => 'Letzte 4 Wochen',  'days' => 28],
+    '2_months'  => ['label' => 'Letzte 2 Monate',  'days' => 60],
+    '3_months'  => ['label' => 'Letzte 3 Monate',  'days' => 90],
+    '6_months'  => ['label' => 'Letzte 6 Monate',  'days' => 180],
+    '12_months' => ['label' => 'Letzte 12 Monate', 'days' => 365],
+];
+
+// Alias-Map fuer alte Zeitraum-Keys. `render_time_period_options()` zeigt
+// nur $TIME_PERIODS an, aber URLs mit ?time_period=1_week werden nicht
+// hart abgelehnt, sondern in den naechsten sinnvollen Key umgemappt.
+$TIME_PERIOD_ALIAS = [
+    '1_week'  => '2_weeks',
+    '3_weeks' => '4_weeks',
 ];
 
 // Sicherheitspuffer fuer Warnlimit (30%)

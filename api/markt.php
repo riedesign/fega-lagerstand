@@ -1,6 +1,6 @@
 <?php
 /**
- * API-Endpunkt: KPI-Dashboard Daten
+ * API-Endpunkt: Markt-Dashboard Daten (Sales-Sicht, alle Bloecke in einem Call)
  */
 require_once __DIR__ . '/../includes/auth.php';
 if (!fega_auth_disabled()) { fega_require_api(); }
@@ -10,14 +10,11 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../config/db_config.php';
 require_once __DIR__ . '/../config/app_config.php';
 require_once __DIR__ . '/../includes/functions.php';
-require_once __DIR__ . '/../includes/queries/kpi.php';
+require_once __DIR__ . '/../includes/queries/markt.php';
 
-$time_period = $_GET['time_period'] ?? '3_weeks';
-if (!isset($TIME_PERIODS[$time_period])) {
-    $time_period = '3_weeks';
-}
+$time_period = resolve_time_period($_GET['time_period'] ?? '4_weeks');
 
-$data = get_kpi_overview($conn, $time_period);
+$data = get_markt_data($conn, $time_period);
 
 echo json_encode($data);
 
