@@ -1,0 +1,17 @@
+# Lokale Konfiguration mit Credentials
+.env
+
+# Logs
+*.log
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Temporaere Dateien
+/tmp/
+*.tmp

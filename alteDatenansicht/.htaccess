@@ -1,0 +1,4 @@
+# Alte Datenansicht - Referenz-Code, nicht mehr in Benutzung.
+# Hat eine SQL-Injection-Schwachstelle im Legacy-api_data.php.
+# Nicht mehr per HTTP erreichbar machen.
+Require all denied
