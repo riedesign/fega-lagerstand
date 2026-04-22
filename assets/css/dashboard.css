@@ -672,3 +672,147 @@ body.rieste-shell {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* === Phase 2b: Shared Components (Stack-Parity mit Flask/React) === */
+/* ACHTUNG: Source-of-Truth ist Rieste-Auth/app/static/css/design-reset.css.
+   Nur hier mirroren; bei Aenderungen beide Stellen updaten. */
+
+.rieste-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem .9rem;
+    border-radius: var(--radius-md, 8px);
+    border: 1px solid transparent;
+    font-weight: 500;
+    font-size: 13px;
+    line-height: 1.2;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s, color .15s, border-color .15s;
+}
+.rieste-btn:focus-visible {
+    outline: 2px solid var(--color-focus-ring, #60a5fa);
+    outline-offset: 2px;
+}
+.rieste-btn-primary {
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    border-color: var(--color-primary);
+}
+.rieste-btn-primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+.rieste-btn-secondary {
+    background: var(--color-bg-raised);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+.rieste-btn-secondary:hover { background: var(--color-bg-hover); }
+.rieste-btn-ghost {
+    background: transparent;
+    color: var(--color-primary);
+    border-color: transparent;
+}
+.rieste-btn-ghost:hover { background: var(--color-bg-hover); }
+.rieste-btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.rieste-input {
+    display: block; width: 100%;
+    padding: .45rem .7rem;
+    background: var(--color-bg-sunken);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm, 4px);
+    font-size: 13px;
+    line-height: 1.4;
+}
+.rieste-input:focus {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+    border-color: var(--color-primary);
+}
+
+.rieste-field {
+    display: flex; flex-direction: column; gap: 4px;
+    margin-bottom: 12px;
+}
+.rieste-field-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+}
+.rieste-field-help {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.rieste-card {
+    background: var(--color-bg-raised);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
+}
+.rieste-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 12px;
+    padding-bottom: .75rem;
+    margin-bottom: .75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+.rieste-card-title { font-weight: 600; font-size: 1rem; }
+.rieste-card-subtitle { font-size: .8rem; color: var(--color-text-muted); margin-top: 2px; }
+.rieste-card-body { color: var(--color-text-primary); }
+
+.rieste-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.rieste-badge-primary { background: rgb(var(--color-rgb-primary, 30 58 95) / 0.15); color: var(--color-primary); }
+.rieste-badge-success { background: var(--color-success-bg); color: var(--color-success-text); }
+.rieste-badge-warning { background: var(--color-warning-bg); color: var(--color-warning-text); }
+.rieste-badge-error   { background: var(--color-error-bg);   color: var(--color-error-text); }
+.rieste-badge-info    { background: var(--color-info-bg);    color: var(--color-info-text); }
+.rieste-badge-neutral { background: var(--color-bg-sunken);  color: var(--color-text-secondary); }
+
+.rieste-stat-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 18px;
+    background: var(--color-bg-raised);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+}
+a.rieste-stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.rieste-stat-card-icon {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--color-primary);
+    background: rgb(var(--color-rgb-primary, 30 58 95) / 0.1);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+.rieste-stat-card-value { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.rieste-stat-card-label { font-size: 0.78rem; color: var(--color-text-muted); margin-top: 2px; }
+.rieste-stat-card-sub { font-size: 0.72rem; color: var(--color-text-muted); margin-top: 4px; }
+.rieste-stat-card-success .rieste-stat-card-icon { color: var(--color-success-text); background: var(--color-success-bg); }
+.rieste-stat-card-warning .rieste-stat-card-icon { color: var(--color-warning-text); background: var(--color-warning-bg); }
+.rieste-stat-card-error   .rieste-stat-card-icon { color: var(--color-error-text);   background: var(--color-error-bg); }
+.rieste-stat-card-info    .rieste-stat-card-icon { color: var(--color-info-text);    background: var(--color-info-bg); }
+
+.rieste-breadcrumbs { font-size: 0.85rem; color: var(--color-text-muted); }
+.rieste-breadcrumbs ol { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 4px 8px; }
+.rieste-breadcrumb-item + .rieste-breadcrumb-item::before {
+    content: "›";
+    margin-right: 8px;
+    color: var(--color-text-muted);
+}
+.rieste-breadcrumb-item a { color: var(--color-link); text-decoration: none; }
+.rieste-breadcrumb-item a:hover { color: var(--color-link-hover); text-decoration: underline; }
+.rieste-breadcrumb-item.active { color: var(--color-text-primary); font-weight: 500; }
