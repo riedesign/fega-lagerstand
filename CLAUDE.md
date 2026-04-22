@@ -1,8 +1,19 @@
 # CLAUDE.md
 
+## Aktueller Stand
+> Repo: `github.com/riedesign/fega-lagerstand` (seit 2026-04-22 im RIESTE-Workspace).
+> Sieh bei groesseren Aenderungen zuerst `../PROJECT-KNOWLEDGE.md` und `../SESSION-HANDOVER.md` im Workspace-Root.
+
 ## Projekt
 
 Fega Lagerbestands-Dashboard — PHP-Webanwendung zur Analyse von Lagerbestaenden und Verkaufskennzahlen der Eigenprodukte (Polar) mit Vergleich zu Fremdprodukten.
+
+## Agents & Skills fuer dieses Projekt
+
+- **Agent** `php-legacy-dev` — Backend-Arbeit mit strikter PHP 7.0 + MySQL 5.7 Kompatibilitaet
+- **Skill** `mysql-5.7-compat` — Umgang mit den fehlenden Features (kein LAG, keine CTEs)
+- **Skill** `php-deploy` — rsync/scp-basierter Deploy nach rieste.org
+- **Skill** `umlaut-skill` (global) — fuer deutsche UI-Texte ohne Umlaute
 
 ## Tech-Stack
 
