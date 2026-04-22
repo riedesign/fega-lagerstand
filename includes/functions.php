@@ -61,17 +61,51 @@ function is_eigenprodukt($artikelname) {
 /**
  * Berechnet taegliche Abgaenge aus Lagerstandsdaten.
  * Erwartet ein Array von Datensaetzen sortiert nach tag ASC.
- * Gibt ein Array mit tag => abgang zurueck.
+ *
+ * Wenn der Bestand von Tag N-1 zu Tag N steigt, war an Tag N eine
+ * Einlagerung (Nachbestellung). Die tatsaechlichen Abgaenge an dem Tag
+ * sind dann unbekannt. Statt sie auf 0 zu clampen (was den Abverkauf
+ * systematisch unterschaetzt), setzen wir den Mittelwert der letzten
+ * bis zu CALC_WINDOW_DAYS Nicht-Einlagerungstage als Proxy ein und
+ * markieren den Tag mit `'interpolated' => true`.
+ *
+ * Rueckgabe: [['tag' => ..., 'abgang' => ..., 'interpolated' => bool], ...]
  */
 function calculate_abgaenge_from_records($records) {
+    $window_size = 7;
     $abgaenge = [];
-    for ($i = 1; $i < count($records); $i++) {
+    $real_window = []; // letzte real gemessene Abgangs-Werte
+
+    $n = count($records);
+    for ($i = 1; $i < $n; $i++) {
         $prev_stock = (int)$records[$i - 1]['lagerstand_end'];
         $curr_stock = (int)$records[$i]['lagerstand_end'];
-        $abgang = max(0, $prev_stock - $curr_stock);
+        $delta = $prev_stock - $curr_stock;
+
+        if ($delta >= 0) {
+            // Normaler Fall: Abgang = Bestandsreduktion (0 inklusive)
+            $abgang = $delta;
+            $interpolated = false;
+            $real_window[] = $delta;
+            if (count($real_window) > $window_size) {
+                array_shift($real_window);
+            }
+        } else {
+            // Bestandsanstieg = Einlagerung. Echter Abgang unbekannt.
+            // Proxy: Mittelwert der juengsten realen Abgangs-Werte.
+            if (count($real_window) > 0) {
+                $abgang = (int)round(array_sum($real_window) / count($real_window));
+            } else {
+                $abgang = 0;
+            }
+            $interpolated = true;
+            // Fenster NICHT mit geschaetztem Wert aktualisieren.
+        }
+
         $abgaenge[] = [
-            'tag'    => $records[$i]['tag'],
-            'abgang' => $abgang,
+            'tag'          => $records[$i]['tag'],
+            'abgang'       => $abgang,
+            'interpolated' => $interpolated,
         ];
     }
     return $abgaenge;
