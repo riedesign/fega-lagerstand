@@ -119,6 +119,17 @@ if (!function_exists('design_load')) {
                 ),
             ),
             'mode' => array('default' => 'auto', 'allow_user_toggle' => true),
+            'layout' => array(
+                'sidebar_width_collapsed' => '48px',
+                'sidebar_width_expanded' => '220px',
+                'header_height' => '64px',
+                'content_padding' => '24px',
+                'content_max_width' => '1400px',
+                'z_sidebar' => '40',
+                'z_header' => '30',
+                'z_modal' => '50',
+                'z_toast' => '60',
+            ),
             'branding' => array(
                 'app_name' => 'RIESTE',
                 'logo_url_light' => '/static/logos/rieste-logo.svg',
@@ -253,6 +264,23 @@ if (!function_exists('design_load')) {
         $out .= "  --radius-sm: " . design_radius($design, 'sm', '4px') . ";\n";
         $out .= "  --radius-md: " . design_radius($design, 'md', '8px') . ";\n";
         $out .= "  --radius-lg: " . design_radius($design, 'lg', '12px') . ";\n";
+        $layout = isset($design['layout']) && is_array($design['layout']) ? $design['layout'] : array();
+        $layoutDefaults = array(
+            'sidebar_width_collapsed' => '48px',
+            'sidebar_width_expanded' => '220px',
+            'header_height' => '64px',
+            'content_padding' => '24px',
+            'content_max_width' => '1400px',
+            'z_sidebar' => '40',
+            'z_header' => '30',
+            'z_modal' => '50',
+            'z_toast' => '60',
+        );
+        foreach ($layoutDefaults as $lk => $ldefault) {
+            $lv = isset($layout[$lk]) && is_string($layout[$lk]) ? $layout[$lk] : $ldefault;
+            $cssKey = str_replace('_', '-', $lk);
+            $out .= "  --layout-" . $cssKey . ": " . $lv . ";\n";
+        }
         $out .= "}\n";
         $out .= "[data-theme=\"dark\"] {\n";
         foreach ($keys as $k) {

@@ -48,6 +48,11 @@
                     root.style.setProperty('--shadow-' + k, cfg.shadow[k]);
                 });
             }
+            if (cfg.layout) {
+                Object.keys(cfg.layout).forEach(function (k) {
+                    root.style.setProperty('--layout-' + k.replace(/_/g, '-'), cfg.layout[k]);
+                });
+            }
         } catch (e) { /* swallow */ }
         refreshCharts();
     }
