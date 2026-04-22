@@ -4,7 +4,9 @@
  */
 require_once __DIR__ . '/../includes/queries/dispo.php';
 
-$kpi = get_dispo_overview($conn, $time_period);
+$kpi      = get_dispo_overview($conn, $time_period);
+$jtl_conn = get_jtl_mssql_conn();
+$abgleich = get_bestand_abgleich($conn, $jtl_conn);
 
 // Trend
 $trend_arrow = '&#9654;';
@@ -55,6 +57,85 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
             KW letzte: <?php echo $kpi['abgang_letzte_woche']; ?>
         </div>
     </div>
+</div>
+
+<!-- Bestands-Abgleich Fega vs. Rieste -->
+<h3 class="section-title" style="margin-top: 12px;">Bestands-Abgleich: Fega vs. Rieste</h3>
+<div class="kpi-grid">
+    <div class="kpi-card status-eigen">
+        <div class="kpi-label">Bestand bei Fega</div>
+        <div class="kpi-value text-eigen">
+            <?php echo number_format($abgleich['sum_fega'], 0, ',', '.'); ?>
+        </div>
+        <div class="kpi-sub"><?php echo $abgleich['artikel_count']; ?> Polar-Artikel</div>
+    </div>
+
+    <div class="kpi-card status-neutral">
+        <div class="kpi-label">Bestand bei Rieste</div>
+        <?php if ($abgleich['jtl_available']): ?>
+        <div class="kpi-value">
+            <?php echo number_format($abgleich['sum_rieste'], 0, ',', '.'); ?>
+        </div>
+        <div class="kpi-sub">
+            <?php echo $abgleich['rieste_match_count']; ?> von <?php echo $abgleich['artikel_count']; ?> HAN gematcht
+        </div>
+        <?php else: ?>
+        <div class="kpi-value" style="font-size: 1.1em; color: #888;">nicht verfuegbar</div>
+        <div class="kpi-sub">JTL MSSQL nicht konfiguriert</div>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($abgleich['jtl_available']): ?>
+    <div class="kpi-card status-ok">
+        <div class="kpi-label">Gesamt (Fega + Rieste)</div>
+        <div class="kpi-value text-ok">
+            <?php echo number_format($abgleich['sum_gesamt'], 0, ',', '.'); ?>
+        </div>
+        <div class="kpi-sub">im Markt verfuegbar</div>
+    </div>
+    <?php endif; ?>
+</div>
+
+<div class="section">
+    <table class="data-table" id="abgleich-table">
+        <thead>
+            <tr>
+                <th>Artikelname</th>
+                <th>HAN</th>
+                <th>Bei Fega</th>
+                <?php if ($abgleich['jtl_available']): ?>
+                <th>Bei Rieste</th>
+                <th>Summe</th>
+                <?php endif; ?>
+            </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($abgleich['artikel'] as $a): ?>
+            <?php
+                $rieste_cell = '&ndash;';
+                if ($a['rieste_bestand'] !== null) {
+                    $rieste_cell = number_format($a['rieste_bestand'], 0, ',', '.');
+                }
+                $summe_cell = '&ndash;';
+                if ($a['summe'] !== null) {
+                    $summe_cell = '<strong>' . number_format($a['summe'], 0, ',', '.') . '</strong>';
+                }
+                $han_link = 'index.php?page=produktdetail&han=' . urlencode($a['han']) . '&time_period=' . urlencode($time_period);
+            ?>
+            <tr>
+                <td><a href="<?php echo htmlspecialchars($han_link); ?>" class="markt-han-link" style="color:#2196F3;text-decoration:none;">
+                    <?php echo htmlspecialchars($a['artikelname']); ?>
+                </a></td>
+                <td><?php echo htmlspecialchars($a['han']); ?></td>
+                <td><?php echo number_format($a['fega_bestand'], 0, ',', '.'); ?></td>
+                <?php if ($abgleich['jtl_available']): ?>
+                <td><?php echo $rieste_cell; ?></td>
+                <td><?php echo $summe_cell; ?></td>
+                <?php endif; ?>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
 </div>
 
 <!-- Abgang-Detail (eingeklappt, oeffnet per Klick auf Kachel) -->
@@ -164,4 +245,12 @@ function toggleDetail(id) {
         el.style.display = 'none';
     }
 }
+
+$(document).ready(function() {
+    // Bestands-Abgleich-Tabelle sortierbar + suchbar machen
+    initDataTable('#abgleich-table', {
+        pageLength: 25,
+        order: [[2, 'desc']]  // sortiert nach Fega-Bestand absteigend
+    });
+});
 </script>

@@ -14,6 +14,13 @@ else
   echo "==> PHP-FPM bereits installiert"
 fi
 
+# 1a. pdo_dblib fuer JTL-MSSQL-Zugriff (Dispo-Seite braucht das fuer den
+# Rieste-Bestand). Falls nicht installiert: php-sybase.
+if ! php -m 2>/dev/null | grep -qi '^pdo_dblib$'; then
+  echo "==> php-sybase (pdo_dblib) installieren fuer JTL-MSSQL-Zugriff..."
+  sudo apt install -y php-sybase || echo "!! php-sybase konnte nicht installiert werden — Rieste-Bestand bleibt aus."
+fi
+
 # 2. Repo klonen falls noch nicht vorhanden
 if [ ! -d "$TARGET/.git" ]; then
   echo "==> Repo klonen nach $TARGET..."
@@ -66,6 +73,7 @@ echo "  1. .env vervollstaendigen: nano $TARGET/.env"
 echo "     - DB_PASSWORD (aus Altinstallation uebernehmen)"
 echo "     - JWT_SECRET_KEY (identisch zum Rieste-Auth-Portal)"
 echo "     - AUTH_APP_SLUG=fega"
+echo "     - JTL_MSSQL_HOST/USER/PASSWORD (optional, aus Rieste-Invoicemanager/.env)"
 echo "  2. DNS: fega.rieste.org → 192.168.10.25 (intern)"
 echo "     Oder public: A-Record setzen + Reverse-Proxy vor 192.168.10.25"
 echo "  3. Im Auth-Portal App 'fega' anlegen + User-Freigaben"

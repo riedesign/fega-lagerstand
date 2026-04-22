@@ -131,3 +131,117 @@ function get_dispo_overview($conn, $time_period) {
         'abgang_letzte_woche'   => $abgang_letzte_woche,
     ];
 }
+
+/**
+ * Bestand-Abgleich: aktueller Lagerstand aller Polar-Artikel bei Fega +
+ * (falls JTL erreichbar) bei uns (Rieste). Wird ueber die HAN verknuepft.
+ *
+ * @param mysqli $conn      Fega-DB
+ * @param PDO|null $jtl_conn optionale JTL-MSSQL-Verbindung, null = kein Rieste-Bestand
+ * @return array
+ */
+function get_bestand_abgleich($conn, $jtl_conn) {
+    // Alle Polar-Artikel mit aktuellem Fega-Bestand
+    $sql = "
+        SELECT t1.id, t1.han, t1.artikelname, t2.lagerstand
+        FROM lager_teci t1
+        JOIN lager_teci_stand t2 ON t1.id = t2.id
+        WHERE t1.artikelname LIKE '%Polar%'
+          AND (t2.id, t2.datum) IN (
+              SELECT id, MAX(datum) FROM lager_teci_stand GROUP BY id
+          )
+        ORDER BY t1.artikelname
+    ";
+
+    $artikel = [];
+    $hans = [];
+    $result = execute_query($conn, $sql);
+    if ($result) {
+        while ($row = $result->fetch_assoc()) {
+            $artikel[] = [
+                'id'             => (int)$row['id'],
+                'han'            => $row['han'],
+                'artikelname'    => $row['artikelname'],
+                'fega_bestand'   => (int)$row['lagerstand'],
+                'rieste_bestand' => null,
+                'summe'          => null,
+            ];
+            if ($row['han'] !== null && $row['han'] !== '') {
+                $hans[] = $row['han'];
+            }
+        }
+    }
+
+    $rieste_map = [];
+    $jtl_available = ($jtl_conn !== null);
+    if ($jtl_conn !== null && count($hans) > 0) {
+        $rieste_map = get_rieste_bestand_map($jtl_conn, array_unique($hans));
+    }
+
+    $sum_fega = 0;
+    $sum_rieste = 0;
+    $rieste_match_count = 0;
+    foreach ($artikel as $i => $a) {
+        $sum_fega += $a['fega_bestand'];
+        if ($jtl_available && isset($rieste_map[$a['han']])) {
+            $rb = (int)round($rieste_map[$a['han']]);
+            $artikel[$i]['rieste_bestand'] = $rb;
+            $artikel[$i]['summe'] = $a['fega_bestand'] + $rb;
+            $sum_rieste += $rb;
+            $rieste_match_count++;
+        }
+    }
+
+    return [
+        'artikel'            => $artikel,
+        'sum_fega'           => $sum_fega,
+        'sum_rieste'         => $sum_rieste,
+        'sum_gesamt'         => $sum_fega + $sum_rieste,
+        'artikel_count'      => count($artikel),
+        'rieste_match_count' => $rieste_match_count,
+        'jtl_available'      => $jtl_available,
+    ];
+}
+
+/**
+ * Holt den aktuellen Rieste-Lagerbestand pro HAN aus JTL (eazybusiness).
+ *
+ * Da tArtikel.cHAN nicht unique ist (ein HAN kann mehreren JTL-Artikeln
+ * zugeordnet sein), wird pro HAN summiert. tlagerbestand hat bei Rieste
+ * nur einen Lagerort — daher reicht LEFT JOIN + SUM.
+ *
+ * @param PDO $jtl_conn
+ * @param array $hans Liste distincter HANs
+ * @return array [han => bestand]
+ */
+function get_rieste_bestand_map($jtl_conn, array $hans) {
+    if (empty($hans)) return [];
+
+    // HANs sicher quoten (Read-Only-User, aber quoten bleibt richtig).
+    $placeholders = [];
+    foreach ($hans as $han) {
+        $placeholders[] = $jtl_conn->quote((string)$han);
+    }
+    $in = implode(',', $placeholders);
+
+    $sql = "
+        SELECT a.cHAN AS han,
+               SUM(ISNULL(lb.fLagerbestand, 0)) AS bestand
+        FROM tArtikel a
+        LEFT JOIN tlagerbestand lb ON lb.kArtikel = a.kArtikel
+        WHERE a.cHAN IN ({$in})
+        GROUP BY a.cHAN
+    ";
+
+    try {
+        $stmt = $jtl_conn->query($sql);
+        $map = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $map[$row['han']] = (float)$row['bestand'];
+        }
+        return $map;
+    } catch (Throwable $e) {
+        error_log('JTL Bestand-Query fehlgeschlagen: ' . $e->getMessage());
+        return [];
+    }
+}
