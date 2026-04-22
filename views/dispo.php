@@ -129,20 +129,18 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 $han_link = 'index.php?page=produktdetail&han=' . urlencode($a['han']) . '&time_period=' . urlencode($time_period);
 
                 $v = $a['vorschlag'];
+                $row_class = '';
                 if ($v['empfehlen']) {
-                    $vorschlag_cell = '<strong class="text-critical">'
-                        . number_format($v['stk'], 0, ',', '.') . ' Stk.</strong>'
-                        . '<br><small style="color:#777;">' . htmlspecialchars($v['grund']) . '</small>';
                     $row_class = 'row-warn';
-                    // Wenn Reichweite < Lead-Time direkt: als kritisch markieren
                     if ($v['reichweite_tage'] !== null && $v['reichweite_tage'] < $a['lead_time']) {
                         $row_class = 'row-critical';
                     }
-                } else {
-                    $vorschlag_cell = '<span style="color:#888;">&ndash;</span>'
-                        . '<br><small style="color:#999;">' . htmlspecialchars($v['grund']) . '</small>';
-                    $row_class = '';
                 }
+                $check_attr     = $v['empfehlen'] ? 'checked' : '';
+                $default_qty    = $v['empfehlen'] ? (int)$v['stk'] : '';
+                $grund_color    = $v['empfehlen'] ? '#777' : '#999';
+                $han_js         = htmlspecialchars($a['han'], ENT_QUOTES);
+                $name_js        = htmlspecialchars($a['artikelname'], ENT_QUOTES);
             ?>
             <tr class="<?php echo $row_class; ?>">
                 <td><a href="<?php echo htmlspecialchars($han_link); ?>" class="markt-han-link" style="color:#2196F3;text-decoration:none;">
@@ -155,79 +153,56 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 <td><?php echo $summe_cell; ?></td>
                 <?php endif; ?>
                 <td><?php echo number_format($a['total_abgang'], 0, ',', '.'); ?></td>
-                <td><?php echo $vorschlag_cell; ?></td>
+                <td class="vorschlag-cell">
+                    <label class="v-label" style="display:flex;align-items:center;gap:6px;">
+                        <input type="checkbox" class="v-select"
+                               data-han="<?php echo $han_js; ?>"
+                               data-name="<?php echo $name_js; ?>"
+                               <?php echo $check_attr; ?>>
+                        <input type="number" class="v-qty"
+                               value="<?php echo $default_qty; ?>"
+                               min="1" step="1"
+                               style="width:80px;padding:3px 6px;"
+                               placeholder="Menge">
+                        <span style="font-size:0.85em;color:#555;">Stk.</span>
+                    </label>
+                    <small style="color:<?php echo $grund_color; ?>;display:block;margin-top:4px;">
+                        <?php echo htmlspecialchars($v['grund']); ?>
+                    </small>
+                </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
     </table>
 </div>
 
-<?php
-// E-Mail-Vorschlag: nur Artikel mit empfohlener Nachbestellung
-$email_artikel = array_filter($abgleich['artikel'], function($a) {
-    return $a['vorschlag']['empfehlen'];
-});
-// Nach Empfehlungsmenge absteigend sortieren
-usort($email_artikel, function($a, $b) {
-    return $b['vorschlag']['stk'] - $a['vorschlag']['stk'];
-});
-?>
-
 <div class="section" id="email-vorschlag-section">
     <h3 class="section-title">E-Mail-Vorschlag an Fega</h3>
-    <?php if (empty($email_artikel)): ?>
-        <p style="color:#4CAF50;font-weight:600;">
-            Kein Nachbestellungs-Bedarf im gewaehlten Zeitraum &mdash; alle Artikel haben ausreichende Reichweite.
-        </p>
-    <?php else: ?>
-        <p style="margin-bottom:10px;color:#555;font-size:0.9em;">
-            Basierend auf <strong><?php echo htmlspecialchars($zeitraum_label); ?></strong>:
-            <?php echo count($email_artikel); ?> Artikel mit Nachbestellungs-Empfehlung.
-            Text unten editierbar vor dem Versenden.
-        </p>
+    <p style="margin-bottom:10px;color:#555;font-size:0.9em;">
+        Haken setzen + Menge anpassen in der Tabelle oben. Der Text unten
+        wird automatisch aktualisiert und ist vor dem Versenden editierbar.
+    </p>
+    <p id="email-empty-hint" style="color:#888;font-style:italic;display:none;">
+        Aktuell sind keine Artikel fuer die Nachbestellung ausgewaehlt.
+    </p>
+    <div id="email-content">
         <div class="email-toolbar">
             <button type="button" class="btn-primary" onclick="copyEmailText()">In Zwischenablage kopieren</button>
-            <a class="btn-secondary"
-               href="#"
-               id="email-mailto-link"
-               onclick="openMailto(event)">
+            <a class="btn-secondary" href="#" id="email-mailto-link" onclick="openMailto(event)">
                 In E-Mail-Programm oeffnen
             </a>
             <span id="email-copy-hint" style="margin-left:12px;color:#4CAF50;display:none;">Kopiert!</span>
+            <span id="email-item-count" style="margin-left:12px;color:#555;font-size:0.85em;"></span>
         </div>
-        <textarea id="email-vorschlag-text" rows="<?php echo min(40, 12 + count($email_artikel) * 2); ?>" style="width:100%;font-family:ui-monospace,Menlo,monospace;font-size:0.85em;padding:12px;border:1px solid #ddd;border-radius:6px;"><?php
-            $lines = [];
-            $lines[] = 'Betreff: Vorschlag Nachbestellung Polar-Produkte';
-            $lines[] = '';
-            $lines[] = 'Hallo Team Fega,';
-            $lines[] = '';
-            $lines[] = 'auf Basis der Abverkaufsdaten der ' . $zeitraum_label
-                     . ' moechten wir Ihnen folgende Nachbestellung vorschlagen,';
-            $lines[] = 'damit Ihr Bestand wieder eine Reichweite von ca. 3 Wochen erreicht:';
-            $lines[] = '';
-            foreach ($email_artikel as $a) {
-                $v = $a['vorschlag'];
-                $lines[] = sprintf(
-                    '- %s (HAN: %s): %s Stk.',
-                    $a['artikelname'], $a['han'], number_format($v['stk'], 0, ',', '.')
-                );
-                $lines[] = sprintf(
-                    '    Bestand aktuell %s Stk., Abverkauf %s: %s Stk., Reichweite %s Tage.',
-                    number_format($a['fega_bestand'], 0, ',', '.'),
-                    $zeitraum_label,
-                    number_format($a['total_abgang'], 0, ',', '.'),
-                    $v['reichweite_tage'] !== null ? number_format($v['reichweite_tage'], 1, ',', '.') : '?'
-                );
-            }
-            $lines[] = '';
-            $lines[] = 'Fuer eventuelle Rueckfragen oder Anpassungen der Mengen stehen wir gerne zur Verfuegung.';
-            $lines[] = '';
-            $lines[] = 'Viele Gruesse,';
-            $lines[] = $nutzer_name;
-            echo htmlspecialchars(implode("\n", $lines));
-        ?></textarea>
-    <?php endif; ?>
+        <textarea id="email-vorschlag-text" rows="18"
+            style="width:100%;font-family:ui-monospace,Menlo,monospace;font-size:0.85em;padding:12px;border:1px solid #ddd;border-radius:6px;"></textarea>
+    </div>
 </div>
+
+<script>
+// Wert aus PHP: Nutzername fuer die E-Mail-Signatur
+var EMAIL_SIGNATUR = <?php echo json_encode($nutzer_name); ?>;
+</script>
 
 <style>
 .email-toolbar {
@@ -371,7 +346,7 @@ function toggleDetail(id) {
 
 $(document).ready(function() {
     // Bestands-Abgleich-Tabelle sortierbar + suchbar machen.
-    // Letzte Spalte (Vorschlag) enthaelt HTML + Grund-Text, nicht sortierbar.
+    // Letzte Spalte (Vorschlag) enthaelt HTML + Inputs, nicht sortierbar.
     var colCount = document.querySelectorAll('#abgleich-table thead th').length;
     initDataTable('#abgleich-table', {
         pageLength: 25,
@@ -380,7 +355,72 @@ $(document).ready(function() {
             { targets: colCount - 1, orderable: false }
         ]
     });
+
+    // Initial Email-Text aus den vorausgewaehlten Zeilen bauen
+    updateEmailText();
+
+    // Live-Updates bei Aenderungen an Checkbox oder Mengen-Input.
+    // Delegation, damit DataTables-Paging nicht die Listener verliert.
+    $(document).on('change', '#abgleich-table .v-select', function() {
+        var qty = $(this).closest('label').find('.v-qty');
+        if (this.checked && (!qty.val() || parseInt(qty.val(), 10) <= 0)) {
+            qty.val(10).focus();
+        }
+        updateEmailText();
+    });
+    $(document).on('input change', '#abgleich-table .v-qty', function() {
+        updateEmailText();
+    });
 });
+
+function collectSelectedItems() {
+    var items = [];
+    $('#abgleich-table .v-select:checked').each(function() {
+        var qty = parseInt($(this).closest('label').find('.v-qty').val(), 10);
+        if (!qty || qty <= 0) return;
+        items.push({
+            han:  this.dataset.han,
+            name: this.dataset.name,
+            qty:  qty
+        });
+    });
+    return items;
+}
+
+function updateEmailText() {
+    var items = collectSelectedItems();
+    var countEl = document.getElementById('email-item-count');
+    var hintEl  = document.getElementById('email-empty-hint');
+    var contentEl = document.getElementById('email-content');
+
+    if (items.length === 0) {
+        if (hintEl) hintEl.style.display = 'block';
+        if (contentEl) contentEl.style.display = 'none';
+        return;
+    }
+    if (hintEl) hintEl.style.display = 'none';
+    if (contentEl) contentEl.style.display = 'block';
+    if (countEl) countEl.textContent = items.length + ' Artikel ausgewaehlt';
+
+    var lines = [];
+    lines.push('Betreff: Vorschlag Nachbestellung Polar-Produkte');
+    lines.push('');
+    lines.push('Hallo Team Fega,');
+    lines.push('');
+    lines.push('da die Lagermengen bei einigen Polar-Produkten bei Ihnen zur Neige gehen,');
+    lines.push('moechten wir Ihnen folgende Nachbestellung vorschlagen:');
+    lines.push('');
+    items.forEach(function(it) {
+        lines.push('- ' + it.name + ' (HAN: ' + it.han + '): ' + it.qty + ' Stk.');
+    });
+    lines.push('');
+    lines.push('Passen Sie die Mengen gerne an, wenn etwas nicht passt.');
+    lines.push('');
+    lines.push('Viele Gruesse,');
+    lines.push(EMAIL_SIGNATUR);
+
+    document.getElementById('email-vorschlag-text').value = lines.join('\n');
+}
 
 function copyEmailText() {
     var ta = document.getElementById('email-vorschlag-text');
