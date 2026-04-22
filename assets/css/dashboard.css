@@ -2,9 +2,9 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background-color: #f0f2f5;
-    color: #333;
+    font-family: var(--font-family-base, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+    background-color: var(--color-bg-base, #f0f2f5);
+    color: var(--color-text-primary, #333);
     line-height: 1.5;
 }
 
@@ -21,15 +21,17 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 16px 24px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: var(--color-bg-raised, #fff);
+    color: var(--color-text-primary, #0f172a);
+    border: 1px solid var(--color-border, transparent);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
     margin-bottom: 12px;
 }
 
 .dashboard-header h1 {
     font-size: 1.4em;
-    color: #1a1a2e;
+    color: var(--color-text-primary, #1a1a2e);
 }
 
 .global-controls {
@@ -41,17 +43,33 @@ body {
 .global-controls label {
     font-weight: 600;
     font-size: 0.9em;
-    color: #555;
+    color: var(--color-text-secondary, #555);
 }
 
 .global-controls select,
 .controls select {
     padding: 6px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: var(--radius-sm, 6px);
     font-size: 0.9em;
-    background: #fff;
+    background: var(--color-bg-raised, #fff);
+    color: var(--color-text-primary, #0f172a);
     cursor: pointer;
+}
+
+.rieste-theme-toggle {
+    padding: 6px 12px;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.9em;
+    background: var(--color-bg-raised, #fff);
+    color: var(--color-text-primary, #0f172a);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.rieste-theme-toggle:hover {
+    background: var(--color-bg-hover, #f1f5f9);
 }
 
 /* === Tab Navigation === */
@@ -59,10 +77,11 @@ body {
     display: flex;
     gap: 4px;
     margin-bottom: 16px;
-    background: #fff;
+    background: var(--color-bg-raised, #fff);
     padding: 4px;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--color-border, transparent);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
 }
 
 .tab-link {
@@ -70,28 +89,30 @@ body {
     text-align: center;
     padding: 10px 16px;
     text-decoration: none;
-    color: #555;
+    color: var(--color-text-secondary, #555);
     font-weight: 600;
     font-size: 0.9em;
-    border-radius: 6px;
+    border-radius: var(--radius-sm, 6px);
     transition: background-color 0.2s, color 0.2s;
 }
 
 .tab-link:hover {
-    background-color: #e8eaf6;
-    color: #333;
+    background-color: var(--color-bg-hover, #e8eaf6);
+    color: var(--color-text-primary, #333);
 }
 
 .tab-link.active {
-    background-color: #2196F3;
-    color: #fff;
+    background-color: var(--color-primary, #2196F3);
+    color: var(--color-primary-contrast, #fff);
 }
 
 /* === Content Area === */
 .dashboard-content {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: var(--color-bg-raised, #fff);
+    color: var(--color-text-primary, #0f172a);
+    border: 1px solid var(--color-border, transparent);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgba(0,0,0,0.1));
     padding: 24px;
     min-height: 400px;
 }
@@ -105,9 +126,10 @@ body {
 }
 
 .kpi-card {
-    background: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    background: var(--color-bg-raised, #fff);
+    color: var(--color-text-primary, #0f172a);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
     padding: 16px 20px;
     text-align: center;
     transition: box-shadow 0.2s;
@@ -133,9 +155,10 @@ body {
 
 /* Detail-Panel (oeffnet sich unter den Kacheln) */
 .detail-panel {
-    background: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    background: var(--color-bg-sunken, #f8f9fa);
+    color: var(--color-text-primary, #0f172a);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-radius: var(--radius-md, 8px);
     padding: 20px;
     margin-bottom: 20px;
     animation: slideDown 0.2s ease-out;
@@ -374,5 +397,80 @@ body {
 
     .tab-link {
         flex: 1 1 100%;
+    }
+}
+
+/* === DataTables Dark-Mode Overrides === */
+[data-theme="dark"] table.dataTable {
+    color: var(--color-text-primary);
+    background: var(--color-bg-raised);
+}
+
+[data-theme="dark"] table.dataTable thead th,
+[data-theme="dark"] table.dataTable thead td {
+    color: var(--color-text-primary);
+    background: var(--color-bg-sunken);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] table.dataTable tbody tr {
+    background: var(--color-bg-raised);
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] table.dataTable tbody tr.odd {
+    background: var(--color-bg-sunken);
+}
+
+[data-theme="dark"] table.dataTable tbody tr:hover {
+    background: var(--color-bg-hover) !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_length,
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter,
+[data-theme="dark"] .dataTables_wrapper .dataTables_info,
+[data-theme="dark"] .dataTables_wrapper .dataTables_processing,
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate {
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_filter input,
+[data-theme="dark"] .dataTables_wrapper .dataTables_length select {
+    background: var(--color-bg-raised);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+[data-theme="dark"] .dataTables_wrapper .paginate_button {
+    color: var(--color-text-primary) !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .paginate_button.current,
+[data-theme="dark"] .dataTables_wrapper .paginate_button.current:hover {
+    background: var(--color-primary) !important;
+    color: var(--color-primary-contrast) !important;
+    border-color: var(--color-primary) !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .paginate_button:hover {
+    background: var(--color-bg-hover) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border) !important;
+}
+
+/* Scrollbars honor theme */
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: var(--color-bg-sunken);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
     }
 }

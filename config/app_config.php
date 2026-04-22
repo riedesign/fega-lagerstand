@@ -20,14 +20,17 @@ $MARKEN_MAP = [
 // Standardmarke fuer nicht zugeordnete Artikel
 $DEFAULT_MARKE = 'Sonstige (Fremd)';
 
-// Farbschema
+// Farbschema — CSS-Vars mit Hex-Fallback.
+// Chart.js liest die Werte zur Laufzeit via
+// getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
+// aus, wenn der JS-Code einen var() String erkennt.
 $FARBEN = [
-    'eigen'    => '#2196F3', // Blau
-    'fremd'    => '#FF9800', // Orange
-    'kritisch' => '#F44336', // Rot
-    'warnung'  => '#FFC107', // Gelb
-    'ok'       => '#4CAF50', // Gruen
-    'neutral'  => '#607D8B', // Grau-Blau
+    'eigen'    => 'var(--color-primary, #2196F3)',          // Eigen-Brand
+    'fremd'    => 'var(--color-brand-accent-red, #FF9800)', // Fremd-Akzent
+    'kritisch' => 'var(--color-error-text, #F44336)',
+    'warnung'  => 'var(--color-warning-text, #FFC107)',
+    'ok'       => 'var(--color-success-text, #4CAF50)',
+    'neutral'  => 'var(--color-text-muted, #607D8B)',
 ];
 
 // Chart-Farben Palette
