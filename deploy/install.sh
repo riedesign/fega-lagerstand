@@ -41,11 +41,11 @@ if [ ! -L /etc/nginx/sites-enabled/fega.rieste.org ]; then
   sudo nginx -t && sudo systemctl reload nginx
 fi
 
-# 5. sudoers-Eintrag fuer passwortlosen FPM-Reload
+# 5. sudoers-Eintrag fuer passwortlosen FPM-Reload (alle gaengigen Versionen)
 SUDOERS=/etc/sudoers.d/fega-lagerstand-reload
 if [ ! -f "$SUDOERS" ]; then
   echo "==> sudoers-Eintrag anlegen..."
-  echo "$USER ALL=(root) NOPASSWD: /bin/systemctl reload php8.1-fpm, /bin/systemctl reload php-fpm" \
+  echo "$USER ALL=(root) NOPASSWD: /bin/systemctl reload php8.3-fpm, /bin/systemctl reload php8.2-fpm, /bin/systemctl reload php8.1-fpm, /bin/systemctl reload php-fpm" \
     | sudo tee "$SUDOERS" > /dev/null
   sudo chmod 0440 "$SUDOERS"
 fi

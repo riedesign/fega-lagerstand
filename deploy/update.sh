@@ -4,11 +4,12 @@ set -e
 cd /opt/fega-lagerstand
 git pull
 
-# Opcache-Reset falls aktiv (vermeidet stale cached Bytecode).
-# PHP-FPM-Reload genuegt fuer opcache.revalidate_freq=0 nicht bei
-# allen Setups — deshalb explizit reloaden.
-sudo /bin/systemctl reload php8.1-fpm 2>/dev/null \
-  || sudo /bin/systemctl reload php-fpm 2>/dev/null \
-  || true
+# Opcache-Reset via FPM-Reload. Version-agnostisch: probiert die
+# ueblichen PHP-Versionen durch, nimmt den ersten der funktioniert.
+for svc in php8.3-fpm php8.2-fpm php8.1-fpm php8.0-fpm php7.4-fpm php-fpm; do
+  if systemctl list-unit-files "$svc.service" >/dev/null 2>&1; then
+    sudo /bin/systemctl reload "$svc" && break
+  fi
+done
 
 echo "✓ Fega-Lagerstand aktualisiert"
