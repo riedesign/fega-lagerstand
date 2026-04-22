@@ -28,7 +28,10 @@ fi
 if [ ! -f "$TARGET/.env" ]; then
   echo "==> .env aus Template erstellen"
   cp "$TARGET/.env.example" "$TARGET/.env"
-  chmod 600 "$TARGET/.env"
+  # www-data (PHP-FPM) muss lesen duerfen, sonst kann PHP die ENV nicht
+  # laden und JWT-Validation schlaegt still fehl.
+  sudo chgrp www-data "$TARGET/.env"
+  chmod 640 "$TARGET/.env"
   echo "!! BITTE .env jetzt manuell editieren und DB_PASSWORD + JWT_SECRET_KEY setzen:"
   echo "   nano $TARGET/.env"
 fi
