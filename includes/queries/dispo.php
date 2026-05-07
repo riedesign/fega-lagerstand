@@ -133,6 +133,30 @@ function get_dispo_overview($conn, $time_period) {
 }
 
 /**
+ * Normalisiert eine Shop-URL aus der DB. Akzeptiert leere Werte,
+ * fehlende Schemas (`www.fega.de/...` → `https://www.fega.de/...`)
+ * und prueft am Ende mit FILTER_VALIDATE_URL.
+ *
+ * Liefert die normalisierte URL oder einen leeren String wenn der
+ * Eintrag offensichtlich kaputt ist (kein Host, JS-Schema, etc.).
+ */
+function normalize_shop_url($raw) {
+    $url = trim((string)$raw);
+    if ($url === '') {
+        return '';
+    }
+    // Schema ergaenzen, falls fehlt (typisch: www.host.tld/...)
+    if (!preg_match('#^https?://#i', $url)) {
+        // Schemas wie javascript:, data:, file: explizit aussortieren
+        if (preg_match('#^[a-z][a-z0-9+.\-]*:#i', $url)) {
+            return '';
+        }
+        $url = 'https://' . ltrim($url, '/');
+    }
+    return filter_var($url, FILTER_VALIDATE_URL) ? $url : '';
+}
+
+/**
  * Berechnet den Nachbestellungs-Vorschlag fuer einen einzelnen Artikel.
  *
  * Logik: wenn die aktuelle Reichweite beim Kunden unter Lead-Time + 30%
@@ -195,7 +219,7 @@ function berechne_nachbestell_vorschlag($fega_bestand, $avg_daily, $lead_time_da
 function get_bestand_abgleich($conn, $jtl_conn, $time_period = '4_weeks') {
     // Alle Polar-Artikel mit aktuellem Fega-Bestand
     $sql = "
-        SELECT t1.id, t1.han, t1.artikelname, t2.lagerstand
+        SELECT t1.id, t1.han, t1.artikelname, t1.url, t2.lagerstand
         FROM lager_teci t1
         JOIN lager_teci_stand t2 ON t1.id = t2.id
         WHERE t1.artikelname LIKE '%Polar%'
@@ -215,10 +239,12 @@ function get_bestand_abgleich($conn, $jtl_conn, $time_period = '4_weeks') {
             // und JTL-Join — daher hier einmalig normalisieren.
             $han         = trim(preg_replace('/\s+/', ' ', (string)$row['han']));
             $artikelname = trim(preg_replace('/\s+/', ' ', (string)$row['artikelname']));
+            $fega_url    = normalize_shop_url($row['url'] ?? '');
             $artikel[] = [
                 'id'             => (int)$row['id'],
                 'han'            => $han,
                 'artikelname'    => $artikelname,
+                'fega_url'       => $fega_url,
                 'fega_bestand'   => (int)$row['lagerstand'],
                 'rieste_bestand' => null,
                 'summe'          => null,

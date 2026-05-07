@@ -143,9 +143,26 @@ $abgang_class = $abgang_diff >= 0 ? 'text-ok' : 'text-critical';
                 $name_js        = htmlspecialchars($a['artikelname'], ENT_QUOTES);
             ?>
             <tr class="<?php echo $row_class; ?>">
-                <td><a href="<?php echo htmlspecialchars($han_link); ?>" class="markt-han-link" style="color:#2196F3;text-decoration:none;">
-                    <?php echo htmlspecialchars($a['artikelname']); ?>
-                </a></td>
+                <td>
+                    <a href="<?php echo htmlspecialchars($han_link); ?>" class="markt-han-link" style="color:#2196F3;text-decoration:none;">
+                        <?php echo htmlspecialchars($a['artikelname']); ?>
+                    </a>
+                    <?php if (!empty($a['fega_url'])): ?>
+                    <a href="<?php echo htmlspecialchars($a['fega_url']); ?>"
+                       class="shop-link-icon"
+                       target="_blank" rel="noopener noreferrer"
+                       title="Im Fega-Onlineshop oeffnen"
+                       aria-label="Im Fega-Onlineshop oeffnen">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                             stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M14 3h7v7"/>
+                            <path d="M10 14L21 3"/>
+                            <path d="M21 14v5a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h5"/>
+                        </svg>
+                    </a>
+                    <?php endif; ?>
+                </td>
                 <td><?php echo htmlspecialchars($a['han']); ?></td>
                 <td><?php echo number_format($a['fega_bestand'], 0, ',', '.'); ?></td>
                 <?php if ($abgleich['jtl_available']): ?>
@@ -234,6 +251,21 @@ var EMAIL_SIGNATUR = <?php echo json_encode($nutzer_name); ?>;
 }
 .email-toolbar .btn-secondary:hover { background: #f5f5f5; }
 #abgleich-table td small { line-height: 1.2; }
+.shop-link-icon {
+    display: inline-block;
+    margin-left: 6px;
+    vertical-align: middle;
+    color: #888;
+    opacity: 0.55;
+    text-decoration: none;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.shop-link-icon:hover,
+.shop-link-icon:focus {
+    opacity: 1;
+    color: #2196F3;
+    color: var(--color-primary, #2196F3);
+}
 </style>
 
 <!-- Abgang-Detail (eingeklappt, oeffnet per Klick auf Kachel) -->
